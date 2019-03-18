@@ -173,16 +173,22 @@ Workbook$methods(cloneWorksheet = function(sheetName, clonedSheet){
   newSheetIndex = length(worksheets) + 1L
   if(newSheetIndex > 1){
     sheetId <- max(as.integer(regmatches(workbook$sheets, regexpr('(?<=sheetId=")[0-9]+', workbook$sheets, perl = TRUE)))) + 1L
+    print(sheetId)
   }else{
     sheetId <- 1
+    print(sheetId)
   }
   
   
   ## copy visibility from cloned sheet!
-  visible <- regmatches(workbook$sheets[[clonedSheet]], regexpr('(?<=state=")[^"]+', workbook$sheets[[clonedSheet]], perl = TRUE))
+  visible <- TRUE
 
+  print(visible)
   ##  Add sheet to workbook.xml
-  workbook$sheets <<- c(workbook$sheets, sprintf('<sheet name="%s" sheetId="%s" state="%s" r:id="rId%s"/>', sheetName, sheetId, visible, newSheetIndex))
+  workbook$sheets <<- c(workbook$sheets, 
+                        sprintf('<sheet name="%s" sheetId="%s" state="%s" r:id="rId%s"/>', sheetName, 
+                                sheetId, visible, newSheetIndex))
+  print(workbook$sheets)
   
   ## append to worksheets list
   worksheets <<- append(worksheets, worksheets[[clonedSheet]]$copy())
@@ -2010,11 +2016,17 @@ Workbook$methods(preSaveCleanUp = function(){
   ## HyperLinks from nTables+3 to nTables+3+nHyperLinks-1
   ## vmlDrawing to have rId 
   
-  sheetRIds <- as.integer(unlist(regmatches(workbook$sheets, gregexpr('(?<=r:id="rId)[0-9]+', workbook$sheets, perl = TRUE))))
+  sheetRIds <- length(workbook$sheets)#as.integer(unlist(regmatches(workbook$sheets, gregexpr('(?<=r:id="rId)[0-9]+', workbook$sheets, perl = TRUE))))
   
-  nSheets <- length(sheetRIds)
+  print(sheetRIds)
+  
+  nSheets <- length(workbook$sheets)
   nExtRefs <- length(externalLinks)
   nPivots <- length(pivotDefinitions)
+  
+  print(nSheets)
+  print(nExtRefs)
+  print(nPivots)
   
   ## add a worksheet if none added
   if(nSheets == 0){
@@ -2032,6 +2044,7 @@ Workbook$methods(preSaveCleanUp = function(){
   sharedStringsInd <- which(grepl("sharedStrings.xml", workbook.xml.rels))
   tableInds <- which(grepl("table[0-9]+.xml", workbook.xml.rels))
   
+  print(sheetInds)
   
   ## Reordering of workbook.xml.rels
   ## don't want to re-assign rIds for pivot tables or slicer caches
@@ -2048,26 +2061,32 @@ Workbook$methods(preSaveCleanUp = function(){
   
   workbook.xml.rels <<- c(workbook.xml.rels, pivotNode, slicerNode)
   
-  
+  print(workbook.xml.rels)
   
   if(!is.null(vbaProject))
     workbook.xml.rels <<- c(workbook.xml.rels, sprintf('<Relationship Id="rId%s" Type="http://schemas.microsoft.com/office/2006/relationships/vbaProject" Target="vbaProject.bin"/>', 1L + length(workbook.xml.rels)))
   
+  print(workbook$sheets)
   ## Reassign rId to workbook sheet elements, (order sheets by sheetId first)
   workbook$sheets <<- unlist(lapply(1:length(workbook$sheets), function(i) {
     gsub('(?<= r:id="rId)[0-9]+', i, workbook$sheets[[i]], perl = TRUE)
   }))
   
+  print(workbook$sheets)
+  
   ## re-order worksheets if need to
   if(any(sheetOrder != 1:nSheets))
     workbook$sheets <<- workbook$sheets[sheetOrder]
   
-  
+  print(sheetOrder)
+  print(workbook$sheets)
   
   ## re-assign tabSelected
   state <- rep.int("visible", nSheets)
   state[grepl("hidden", workbook$sheets)] <- "hidden"
   visible_sheet_index <- which(state %in% "visible")[[1]]
+  
+  print(state)
   
   workbook$bookViews <<- sprintf('<bookViews><workbookView xWindow="0" yWindow="0" windowWidth="13125" windowHeight="6105" firstSheet="%s" activeTab="%s"/></bookViews>',
                                  visible_sheet_index-1L,
